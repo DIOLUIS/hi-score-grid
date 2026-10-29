@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Insert Coin Arena | Hi-Score Grid</title>
+    
+    <!-- Tipografia Arcade e Cyberpunk -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- CABEÇALHO GLOBAL (Marca Mãe) -->
+    <header class="top-nav">
+        <div class="logo">
+            <h1>HI-SCORE<span class="neon-text">_GRID</span></h1>
+        </div>
+        <div class="user-profile">
+            <span class="player-name">PLAYER_1</span>
+            <span class="player-stars">⭐ 000</span>
+        </div>
+    </header>
+
+    <!-- ÁREA CENTRAL: INSERT COIN ARENA -->
+    <main class="arena-container">
+        
+        <!-- NAVEGAÇÃO DA SEÇÃO ARCADE -->
+        <div class="arcade-header">
+            <h2 class="arena-title">INSERT COIN ARENA <span class="badge">ARCADE</span></h2>
+            <nav class="system-selector">
+                <button class="system-tab active">CPS-1</button>
+                <button class="system-tab">CPS-2</button>
+                <button class="system-tab">CPS-3</button>
+                <button class="system-tab">MVS (NEOGEO)</button>
+            </nav>
+        </div>
+
+        <!-- DROP ZONE: Área para arrastar a ROM do sistema selecionado -->
+        <section id="drop-zone-section" class="cyber-panel">
+            <div id="rom-drop-zone" class="drop-area">
+                <i class="icon-insert-coin"></i>
+                <h2 id="drop-title">SISTEMA ATIVO: CPS-1</h2>
+                <p>Arraste o arquivo .zip do jogo aqui</p>
+                <p class="sub-text">Validação de Hash Local Ativada</p>
+                <input type="file" id="rom-input" accept=".zip" hidden>
+                <button id="btn-select-rom" class="btn-neon">SELECIONAR ARQUIVO</button>
+            </div>
+        </section>
+
+        <!-- EMULADOR: Inicialmente oculto -->
+        <section id="emulator-section" class="cyber-panel hidden">
+            <div id="game-canvas-container">
+                <!-- O WebAssembly injetará o jogo aqui na Fase 3 -->
+                <p class="loading-text">Iniciando Core...</p>
+            </div>
+            <button id="btn-quit" class="btn-danger">ABORTAR MISSÃO</button>
+        </section>
+
+        <!-- LEADERBOARD: Tabela de Classificação -->
+        <section id="leaderboard-section" class="cyber-panel">
+            <h2 class="section-title">GLOBAL_RANKING // CPS-1</h2>
+            <table class="cyber-table">
+                <thead>
+                    <tr>
+                        <th>RANK</th>
+                        <th>JOGADOR</th>
+                        <th>JOGO</th>
+                        <th>SCORE</th>
+                    </tr>
+                </thead>
+                <tbody id="ranking-data">
+                    <tr class="top-1">
+                        <td>1ST</td>
+                        <td>UNKNOWN</td>
+                        <td>SF2CE</td>
+                        <td>999.999</td>
+                    </tr>
+                    <tr>
+                        <td>2ND</td>
+                        <td>GUEST</td>
+                        <td>FFIGHT</td>
+                        <td>500.000</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+    </main>
+
+    <script src="app.js"></script>
+</body>
+</html>
