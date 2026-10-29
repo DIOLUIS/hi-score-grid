@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-PT">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -40,12 +40,12 @@
             <div id="rom-drop-zone" class="drop-area">
                 <i class="icon-insert-coin"></i>
                 <h2 id="drop-title">SISTEMA ATIVO: CPS-1/CPS-2</h2>
-                <p>Arraste o arquivo .zip do jogo aqui</p>
+                <p>Arraste o ficheiro .zip do jogo aqui</p>
                 <p class="sub-text">Validação de Hash Local Ativada</p>
                 <input type="file" id="rom-input" accept=".zip" hidden>
                 
                 <div style="margin-top: 20px; display: flex; justify-content: center;">
-                    <button id="btn-select-rom" class="btn-neon">SELECIONAR ARQUIVO</button>
+                    <button id="btn-select-rom" class="btn-neon">SELECIONAR FICHEIRO</button>
                 </div>
             </div>
         </section>
@@ -57,10 +57,9 @@
             </div>
             
             <div class="emulator-controls">
-                <!-- Botão agora fica disponível DURANTE a partida -->
                 <button id="btn-toggle-shader" class="btn-neon">LIGAR SHADER CRT</button>
                 <button id="btn-quit" class="btn-danger">ABORTAR MISSÃO</button>
-                <button id="btn-fullscreen" class="btn-neon">TELA CHEIA</button>
+                <button id="btn-fullscreen" class="btn-neon">ECRÃ INTEIRO</button>
             </div>
         </section>
 
@@ -88,9 +87,14 @@
 
     </main>
 
+    <!-- 1. A biblioteca do Supabase carrega PRIMEIRO -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <!-- 2. Depois carregam os nossos controlos e lógica -->
     <script src="input.js"></script>
     <script src="app.js"></script>
     
+    <!-- 3. Por fim, o motor WebAssembly -->
     <script type="module">
         import fbneo from './core/fbneo_libretro.js';
 
