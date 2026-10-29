@@ -1,137 +1,245 @@
-/* DESIGN SYSTEM TOKENS */
+/* =========================================
+   HI-SCORE GRID - FOLHA DE ESTILOS PRINCIPAL
+   ========================================= */
+
 :root {
-    --bg-void: #09090b;
-    --bg-surface: #18181b;
-    --bg-surface-hover: #27272a;
-    
     --neon-cyan: #00f0ff;
     --neon-pink: #ff003c;
-    --text-main: #e4e4e7;
-    --text-muted: #a1a1aa;
-
-    --font-arcade: 'Press Start 2P', cursive;
-    --font-tech: 'Share Tech Mono', monospace;
+    --dark-bg: #0a0a0c;
+    --panel-bg: #111116;
+    --text-main: #e0e0e0;
 }
 
-* { margin: 0; padding: 0; box-sizing: border-box; }
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
 
 body {
-    background-color: var(--bg-void);
+    background-color: var(--dark-bg);
     color: var(--text-main);
-    font-family: var(--font-tech);
-    background-image: 
-        linear-gradient(rgba(0, 240, 255, 0.03) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0, 240, 255, 0.03) 1px, transparent 1px);
-    background-size: 30px 30px;
+    font-family: 'Share Tech Mono', monospace;
+    background-image: linear-gradient(rgba(0, 240, 255, 0.03) 1px, transparent 1px),
+                      linear-gradient(90deg, rgba(0, 240, 255, 0.03) 1px, transparent 1px);
+    background-size: 20px 20px;
     min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
 }
 
-.hidden { display: none !important; }
+h1, h2, h3, .player-name, .player-stars, .btn-neon, .btn-danger, th, .top-1 td:first-child {
+    font-family: 'Press Start 2P', cursive;
+}
 
-/* CABEÇALHO GLOBAL */
+.hidden { 
+    display: none !important; 
+}
+
+/* --- CABEÇALHO GLOBAL --- */
 .top-nav {
-    width: 100%;
-    max-width: 1000px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 20px;
-    border-bottom: 2px solid var(--bg-surface-hover);
-    margin-bottom: 30px;
+    padding: 20px 40px;
+    border-bottom: 1px solid rgba(0, 240, 255, 0.2);
+    background-color: rgba(10, 10, 12, 0.9);
+}
+.neon-text { 
+    color: var(--neon-cyan); 
+    text-shadow: 0 0 10px var(--neon-cyan); 
+}
+.player-name { 
+    font-size: 0.8rem; 
+    margin-right: 15px; 
+}
+.player-stars { 
+    font-size: 0.8rem; 
+    color: #ffd700; 
 }
 
-.logo h1 { font-family: var(--font-arcade); font-size: 1.2rem; }
-.neon-text { color: var(--neon-cyan); text-shadow: 0 0 10px rgba(0, 240, 255, 0.5); }
-.user-profile { font-size: 1.2rem; display: flex; gap: 20px; }
-.player-stars { color: #ffd700; }
-
-/* ARENA PRINCIPAL */
+/* --- ESTRUTURA CENTRAL --- */
 .arena-container {
-    width: 100%;
     max-width: 1000px;
-    display: flex;
-    flex-direction: column;
-    gap: 30px;
+    margin: 40px auto;
     padding: 0 20px;
 }
 
-.cyber-panel {
-    background-color: var(--bg-surface);
-    border: 1px solid var(--bg-surface-hover);
-    padding: 20px;
-    border-radius: 4px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-    text-align: center;
+.arcade-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+.arena-title { 
+    font-size: 1.2rem; 
+}
+.badge {
+    background-color: var(--neon-pink);
+    color: white;
+    padding: 5px 10px;
+    font-size: 0.7rem;
+    border-radius: 3px;
+    margin-left: 10px;
 }
 
-/* SEÇÃO ARCADE (SISTEMAS) */
-.arcade-header {
-    margin-bottom: 10px;
-    border-bottom: 1px solid var(--bg-surface-hover);
-    padding-bottom: 20px;
+/* --- SELETOR DE SISTEMAS --- */
+.system-selector { 
+    display: flex; 
+    gap: 10px; 
 }
-.arena-title { font-family: var(--font-arcade); font-size: 1.2rem; margin-bottom: 20px; }
-.badge { background-color: var(--neon-pink); color: var(--text-main); font-size: 0.8rem; padding: 3px 8px; border-radius: 3px; margin-left: 10px; }
-.system-selector { display: flex; gap: 15px; overflow-x: auto; }
 .system-tab {
-    background: var(--bg-surface);
-    color: var(--text-muted);
-    border: 1px solid var(--bg-surface-hover);
-    padding: 8px 16px;
-    font-family: var(--font-tech);
-    font-size: 1.1rem;
+    background: transparent;
+    color: var(--text-main);
+    border: 1px solid #333;
+    padding: 8px 15px;
+    font-family: 'Share Tech Mono', monospace;
     cursor: pointer;
-    transition: 0.2s;
-    border-radius: 4px 4px 0 0;
+    transition: all 0.3s;
 }
-.system-tab:hover { color: var(--text-main); background: var(--bg-surface-hover); }
-.system-tab.active {
+.system-tab.active, .system-tab:hover {
+    border-color: var(--neon-cyan);
+    color: var(--neon-cyan);
+    box-shadow: inset 0 0 10px rgba(0, 240, 255, 0.2);
+}
+
+/* --- PAINÉIS E DROP ZONE --- */
+.cyber-panel {
+    background-color: var(--panel-bg);
+    border: 1px solid #222;
+    padding: 30px;
+    margin-bottom: 30px;
+    position: relative;
+}
+.drop-area {
+    border: 2px dashed #444;
+    text-align: center;
+    padding: 50px 20px;
+    transition: all 0.3s;
+}
+.drop-area h2 { 
+    font-size: 1rem; 
+    margin-bottom: 15px; 
+    color: var(--neon-cyan); 
+}
+.sub-text { 
+    font-size: 0.9rem; 
+    color: #888; 
+    margin: 10px 0 20px; 
+}
+
+/* --- BOTÕES --- */
+.btn-neon {
     background: transparent;
     color: var(--neon-cyan);
-    border-color: var(--neon-cyan);
-    border-bottom: none;
-    box-shadow: inset 0 4px 10px rgba(0, 240, 255, 0.1);
-}
-
-/* DROP ZONE */
-.drop-area {
-    border: 2px dashed var(--neon-cyan);
-    padding: 50px 20px;
-    transition: all 0.3s ease;
+    border: 1px solid var(--neon-cyan);
+    padding: 10px 20px;
+    font-size: 0.7rem;
     cursor: pointer;
+    transition: all 0.3s;
 }
-.drop-area h2 { font-family: var(--font-arcade); font-size: 1rem; color: var(--neon-cyan); margin-bottom: 15px; }
-.sub-text { color: var(--text-muted); font-size: 0.9rem; margin-top: 10px; }
+.btn-neon:hover {
+    background: rgba(0, 240, 255, 0.1);
+    box-shadow: 0 0 15px rgba(0, 240, 255, 0.4);
+}
+.btn-danger {
+    background: transparent;
+    color: var(--neon-pink);
+    border: 1px solid var(--neon-pink);
+    padding: 10px 20px;
+    font-size: 0.7rem;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+.btn-danger:hover {
+    background: rgba(255, 0, 60, 0.1);
+    box-shadow: 0 0 15px rgba(255, 0, 60, 0.4);
+}
 
-/* CANVAS DO EMULADOR (NOVO) */
-#game-canvas-container {
+/* --- LEADERBOARD --- */
+.section-title { 
+    font-size: 1rem; 
+    margin-bottom: 20px; 
+    color: var(--neon-pink); 
+}
+.cyber-table { 
+    width: 100%; 
+    border-collapse: collapse; 
+    text-align: left; 
+}
+.cyber-table th { 
+    padding: 15px; 
+    border-bottom: 1px solid #333; 
+    font-size: 0.7rem; 
+    color: #888; 
+}
+.cyber-table td { 
+    padding: 15px; 
+    border-bottom: 1px solid #222; 
+    font-family: 'Share Tech Mono', monospace; 
+}
+.top-1 { 
+    color: var(--neon-cyan); 
+    font-weight: bold; 
+}
+
+/* =========================================
+   EMULADOR (Tamanho da Tela e Controlos)
+   ========================================= */
+.emulator-controls {
     display: flex;
+    gap: 15px;
     justify-content: center;
-    margin-bottom: 20px;
+    margin-top: 20px;
+    width: 100%;
+}
+
+#game-canvas-container {
+    position: relative;
+    width: 100%;
+    max-width: 800px;
+    background-color: #000;
+    box-shadow: 0 0 20px rgba(0, 240, 255, 0.2);
+    display: flex; 
+    align-items: center; 
+    justify-content: center;
 }
 
 #emulator-canvas {
     width: 100%;
-    max-width: 640px;
-    aspect-ratio: 4/3; /* Proporção clássica Arcade */
-    background-color: #000;
-    border: 2px solid var(--neon-cyan);
-    box-shadow: 0 0 20px rgba(0, 240, 255, 0.2);
-    display: none;
+    height: auto;
+    max-height: 75vh;
+    image-rendering: pixelated;
+    display: block;
 }
 
-/* BOTÕES */
-.btn-neon { background: transparent; color: var(--neon-cyan); border: 1px solid var(--neon-cyan); padding: 10px 20px; font-family: var(--font-tech); font-size: 1.2rem; cursor: pointer; transition: 0.2s; margin-top: 20px; }
-.btn-neon:hover { background: var(--neon-cyan); color: var(--bg-void); box-shadow: 0 0 15px var(--neon-cyan); }
-.btn-danger { background: transparent; color: var(--neon-pink); border: 1px solid var(--neon-pink); padding: 10px 20px; font-family: var(--font-tech); font-size: 1.2rem; cursor: pointer; transition: 0.2s; }
-.btn-danger:hover { background: var(--neon-pink); color: var(--bg-void); box-shadow: 0 0 15px var(--neon-pink); }
+/* FORÇAR ECRÃ INTEIRO A ESCALAR O JOGO */
+#game-canvas-container:fullscreen {
+    width: 100vw !important;
+    height: 100vh !important;
+    max-width: none !important;
+    background-color: #000;
+}
 
-/* TABELA DE RANKING */
-.section-title { font-family: var(--font-arcade); font-size: 1rem; color: var(--neon-pink); margin-bottom: 20px; text-shadow: 0 0 5px rgba(255, 0, 60, 0.5); text-align: left; }
-.cyber-table { width: 100%; border-collapse: collapse; font-size: 1.2rem; }
-.cyber-table th, .cyber-table td { padding: 12px; text-align: left; border-bottom: 1px solid var(--bg-surface-hover); }
-.cyber-table th { color: var(--text-muted); }
-.top-1 { color: var(--neon-cyan); font-weight: bold; }
+#game-canvas-container:fullscreen #emulator-canvas {
+    width: 100% !important;
+    height: 100% !important;
+    max-height: none !important;
+    /* object-fit: contain força o canvas a crescer até tocar nas bordas do ecrã sem distorcer */
+    object-fit: contain !important; 
+}
+
+/* SHADER CRT */
+#game-canvas-container.crt-shader::after {
+    content: "";
+    position: absolute;
+    top: 0; 
+    left: 0; 
+    width: 100%; 
+    height: 100%;
+    background: linear-gradient(
+        rgba(0, 0, 0, 0) 50%, 
+        rgba(0, 0, 0, 0.4) 50%
+    );
+    background-size: 100% 4px;
+    z-index: 999;
+    pointer-events: none;
+}

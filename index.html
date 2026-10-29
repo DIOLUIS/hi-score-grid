@@ -5,19 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Insert Coin Arena | Hi-Score Grid</title>
     
-    <!-- Tipografia Arcade e Cyberpunk -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Share+Tech+Mono&display=swap" rel="stylesheet">
     
-    <!-- Motor de Descompactação ZIP (JSZip) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <!-- CABEÇALHO GLOBAL (Marca Mãe) -->
     <header class="top-nav">
         <div class="logo">
             <h1>HI-SCORE<span class="neon-text">_GRID</span></h1>
@@ -28,10 +24,8 @@
         </div>
     </header>
 
-    <!-- ÁREA CENTRAL: INSERT COIN ARENA -->
     <main class="arena-container">
         
-        <!-- NAVEGAÇÃO DA SEÇÃO ARCADE -->
         <div class="arcade-header">
             <h2 class="arena-title">INSERT COIN ARENA <span class="badge">ARCADE</span></h2>
             <nav class="system-selector">
@@ -42,30 +36,36 @@
             </nav>
         </div>
 
-        <!-- DROP ZONE: Área para arrastar a ROM do sistema selecionado -->
         <section id="drop-zone-section" class="cyber-panel">
             <div id="rom-drop-zone" class="drop-area">
                 <i class="icon-insert-coin"></i>
-                <h2 id="drop-title">SISTEMA ATIVO: CPS-1</h2>
+                <h2 id="drop-title">SISTEMA ATIVO: CPS-1/CPS-2</h2>
                 <p>Arraste o arquivo .zip do jogo aqui</p>
                 <p class="sub-text">Validação de Hash Local Ativada</p>
                 <input type="file" id="rom-input" accept=".zip" hidden>
-                <button id="btn-select-rom" class="btn-neon">SELECIONAR ARQUIVO</button>
+                
+                <div style="margin-top: 20px; display: flex; justify-content: center;">
+                    <button id="btn-select-rom" class="btn-neon">SELECIONAR ARQUIVO</button>
+                </div>
             </div>
         </section>
 
-        <!-- EMULADOR: Inicialmente oculto -->
-        <section id="emulator-section" class="cyber-panel hidden">
+        <!-- Secção do Emulador -->
+        <section id="emulator-section" class="cyber-panel hidden" style="display: flex; flex-direction: column; align-items: center;">
             <div id="game-canvas-container">
-                <!-- O WebAssembly usará este canvas para desenhar os gráficos do jogo -->
                 <canvas id="emulator-canvas"></canvas>
             </div>
-            <button id="btn-quit" class="btn-danger">ABORTAR MISSÃO</button>
+            
+            <div class="emulator-controls">
+                <!-- Botão agora fica disponível DURANTE a partida -->
+                <button id="btn-toggle-shader" class="btn-neon">LIGAR SHADER CRT</button>
+                <button id="btn-quit" class="btn-danger">ABORTAR MISSÃO</button>
+                <button id="btn-fullscreen" class="btn-neon">TELA CHEIA</button>
+            </div>
         </section>
 
-        <!-- LEADERBOARD: Tabela de Classificação -->
         <section id="leaderboard-section" class="cyber-panel">
-            <h2 class="section-title">GLOBAL_RANKING // CPS-1</h2>
+            <h2 class="section-title">GLOBAL_RANKING // ARCADE</h2>
             <table class="cyber-table">
                 <thead>
                     <tr>
@@ -88,15 +88,12 @@
 
     </main>
 
-    <!-- 1. A nossa Lógica Principal -->
+    <script src="input.js"></script>
     <script src="app.js"></script>
     
-    <!-- 2. Carregamento e Inicialização do Motor WebAssembly Moderna (ES Module) -->
     <script type="module">
-        // Importa o núcleo C++ do emulador
         import fbneo from './core/fbneo_libretro.js';
 
-        // Configura e arranca o motor na memória
         fbneo({
             canvas: document.getElementById('emulator-canvas'),
             noInitialRun: true,
@@ -108,7 +105,6 @@
             printErr: function(text) { console.error("[FBNeo] " + text); }
         }).then(function(instance) {
             console.log("[SYSTEM] Motor FBNeo inicializado e pronto!");
-            // Quebra a "bolha" e expõe as variáveis de sistema para o nosso app.js usar
             window.CoreFS = instance.FS;
             window.CoreModule = instance;
         });
