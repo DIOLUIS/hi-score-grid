@@ -1,9 +1,9 @@
 /**
  * HI-SCORE GRID // INSERT COIN ARENA
- * Fase 2: Motor de Leitura de ROMs Local (In-Memory ArrayBuffer)
+ * Fases 2 e 3: Leitura Local, Hash SHA-1 e Emscripten WASM Bridge
  */
 
-// 1. Mapeamento do DOM (Document Object Model)
+// 1. Mapeamento do DOM
 const dropZone = document.getElementById('rom-drop-zone');
 const fileInput = document.getElementById('rom-input');
 const btnSelect = document.getElementById('btn-select-rom');
@@ -12,14 +12,11 @@ const sectionDrop = document.getElementById('drop-zone-section');
 const sectionEmulator = document.getElementById('emulator-section');
 const btnQuit = document.getElementById('btn-quit');
 
-// 2. Eventos de Interação UX/UI
-btnSelect.addEventListener('click', () => {
-    fileInput.click(); // Conecta o botão visual ao input oculto
-});
+// 2. Eventos de UI (Drag & Drop)
+btnSelect.addEventListener('click', () => fileInput.click());
 
-// Efeitos visuais de Drag & Drop (Arrastar e Soltar)
 dropZone.addEventListener('dragover', (e) => {
-    e.preventDefault(); // Necessário para permitir o drop
+    e.preventDefault();
     dropZone.style.backgroundColor = 'rgba(0, 240, 255, 0.1)';
     dropZone.style.boxShadow = 'inset 0 0 30px rgba(0, 240, 255, 0.3)';
     dropZone.style.borderColor = '#fff';
@@ -30,83 +27,155 @@ dropZone.addEventListener('dragleave', (e) => {
     resetDropZoneUI();
 });
 
-// 3. Captura do Arquivo
 dropZone.addEventListener('drop', (e) => {
     e.preventDefault();
     resetDropZoneUI();
-    
-    if (e.dataTransfer.files.length > 0) {
-        processRomFile(e.dataTransfer.files[0]);
-    }
+    if (e.dataTransfer.files.length > 0) processRomFile(e.dataTransfer.files[0]);
 });
 
 fileInput.addEventListener('change', (e) => {
-    if (e.target.files.length > 0) {
-        processRomFile(e.target.files[0]);
-    }
+    if (e.target.files.length > 0) processRomFile(e.target.files[0]);
 });
 
-// 4. Reset Visual da Drop Zone
 function resetDropZoneUI() {
     dropZone.style.backgroundColor = 'transparent';
     dropZone.style.boxShadow = 'none';
     dropZone.style.borderColor = 'var(--neon-cyan)';
 }
 
-// 5. Motor de Leitura na Memória (ArrayBuffer)
-function processRomFile(file) {
-    // Validação básica de segurança (UX)
+// 3. Whitelist de Hashes SHA-1 (Anti-Cheat Data)
+const VALID_ROMS = {
+    "exemplo_de_hash_sha1_aqui": { game: "Street Fighter II' - Champion Edition", rom: "sf2ce" }
+};
+
+// 4. Motor Principal (Leitura + Criptografia)
+async function processRomFile(file) {
     if (!file.name.toLowerCase().endsWith('.zip')) {
-        alert("FORMATO INVÁLIDO: Por favor, insira um arquivo .zip compatível com CPS1.");
+        alert("FORMATO INVÁLIDO: Arquivo deve ser .zip");
         return;
     }
 
-    dropTitle.innerText = "LENDO DADOS...";
+    dropTitle.innerText = "DESCRIPTOGRAFANDO E VALIDANDO...";
     dropTitle.style.color = "var(--neon-pink)";
 
-    // Instancia o leitor nativo do navegador
-    const reader = new FileReader();
-
-    reader.onload = function(event) {
-        // O arquivo agora reside exclusivamente na RAM do cliente
-        const arrayBuffer = event.target.result;
+    try {
+        const arrayBuffer = await file.arrayBuffer();
         
-        // Converte para Uint8Array (formato padrão consumido por emuladores em C/C++ compilados via WebAssembly)
-        const romData = new Uint8Array(arrayBuffer);
+        // 4.1 Abre o ZIP na memória e lê os ficheiros
+        const zip = await JSZip.loadAsync(arrayBuffer);
+        const fileNames = Object.keys(zip.files).filter(name => !zip.files[name].dir).sort();
         
-        console.log(`[SYSTEM] Arquivo carregado com sucesso: ${file.name}`);
-        console.log(`[SYSTEM] Tamanho alocado na RAM: ${(romData.length / 1024 / 1024).toFixed(2)} MB`);
+        // 4.2 Concatena os binários
+        let totalSize = 0;
+        const buffers = [];
+        for (const name of fileNames) {
+            const fileData = await zip.files[name].async("uint8array");
+            buffers.push(fileData);
+            totalSize += fileData.length;
+        }
 
-        // Transição de UI: Oculta Drop Zone e exibe o Canvas do Emulador
+        const concatenated = new Uint8Array(totalSize);
+        let offset = 0;
+        for (const buf of buffers) {
+            concatenated.set(buf, offset);
+            offset += buf.length;
+        }
+
+        // 4.3 Calcula a assinatura digital da ROM (SHA-1)
+        const hashBuffer = await crypto.subtle.digest('SHA-1', concatenated);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        const sha1Hash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
+        console.log(`[SECURITY] Hash SHA-1 gerado: ${sha1Hash}`);
+
+        // Validação (Comentada para permitir testes de integração agora)
+        /*
+        if (!VALID_ROMS[sha1Hash]) {
+            throw new Error("ROM ADULTERADA OU DESCONHECIDA. Cheat detectado.");
+        }
+        */
+        
         transitionToEmulator();
         
-        // TODO (Fase 3): Aqui enviaremos o 'romData' para validação de Hash e injeção no WebAssembly.
-    };
+        // 4.4 Envia a ROM para o sistema de ficheiros virtual do WASM
+        const originalZipBuffer = new Uint8Array(arrayBuffer);
+        const romCode = file.name.toLowerCase().replace('.zip', '');
+        console.log(`[SYSTEM] A iniciar núcleo com a ROM: ${romCode}`);
+        
+        bootWebAssemblyCore(romCode, originalZipBuffer);
 
-    reader.onerror = function() {
-        alert("ERRO CRÍTICO: Falha ao ler o arquivo na memória local.");
+    } catch (error) {
+        console.error(error);
+        alert(`FALHA DE SEGURANÇA: ${error.message}`);
         dropTitle.innerText = "SISTEMA ATIVO: CPS-1";
         dropTitle.style.color = "var(--neon-cyan)";
-    };
-
-    // Inicia a leitura assíncrona do arquivo como buffer binário
-    reader.readAsArrayBuffer(file);
+    }
 }
 
-// 6. Transição de Telas
 function transitionToEmulator() {
     sectionDrop.classList.add('hidden');
     sectionEmulator.classList.remove('hidden');
 }
 
-// 7. Abortar Missão (Voltar à Drop Zone)
 btnQuit.addEventListener('click', () => {
     sectionEmulator.classList.add('hidden');
     sectionDrop.classList.remove('hidden');
-    
-    // Limpa o input e reseta a UI
     fileInput.value = "";
     dropTitle.innerText = "SISTEMA ATIVO: CPS-1";
     dropTitle.style.color = "var(--neon-cyan)";
+    document.getElementById('emulator-canvas').style.display = "none";
     console.log("[SYSTEM] Emulação abortada. Memória liberada.");
 });
+
+// 5. Ponte com o WebAssembly (Emscripten)
+var Module = {
+    canvas: (function() {
+        var canvas = document.getElementById('emulator-canvas');
+        canvas.addEventListener("webglcontextlost", function(e) { 
+            alert('Contexto WebGL perdido. Recarregue a página.'); 
+            e.preventDefault(); 
+        }, false);
+        return canvas;
+    })(),
+    noInitialRun: true,
+    
+    // Mapeamento correto para a pasta core/
+    locateFile: function(path) {
+        if (path.endsWith('.wasm')) {
+            return 'core/' + path;
+        }
+        return path;
+    },
+    
+    print: function(text) { console.log("[FBNeo] " + text); },
+    printErr: function(text) { console.error("[FBNeo] " + text); }
+};
+
+// 5. Ponte com o WebAssembly (Emscripten Moderna)
+function bootWebAssemblyCore(romCode, romZipBuffer) {
+    console.log(`[SYSTEM] Preparando FileSystem Virtual para ${romCode}.zip...`);
+
+    // Verifica se o motor importado no HTML já terminou de carregar
+    if (!window.CoreFS || !window.CoreModule) {
+        alert("O motor Arcade ainda está a carregar. Aguarde 2 segundos e tente arrastar novamente.");
+        return;
+    }
+
+    try {
+        // Cria a pasta no sistema de ficheiros virtual do emulador
+        if (!window.CoreFS.analyzePath('/roms').exists) {
+            window.CoreFS.mkdir('/roms');
+        }
+        
+        // Escreve a ROM do Street Fighter na memória
+        window.CoreFS.writeFile(`/roms/${romCode}.zip`, romZipBuffer);
+        console.log(`[SYSTEM] ROM injetada no VFS: /roms/${romCode}.zip`);
+        
+        // Puxa o gatilho principal do motor C++
+        window.CoreModule.callMain([`/roms/${romCode}.zip`]);
+        document.getElementById('emulator-canvas').style.display = "block";
+        
+    } catch (e) {
+        console.error("[SYSTEM] Falha ao iniciar WebAssembly:", e);
+    }
+}

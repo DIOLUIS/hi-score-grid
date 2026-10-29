@@ -10,6 +10,9 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Share+Tech+Mono&display=swap" rel="stylesheet">
     
+    <!-- Motor de Descompactação ZIP (JSZip) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -54,8 +57,8 @@
         <!-- EMULADOR: Inicialmente oculto -->
         <section id="emulator-section" class="cyber-panel hidden">
             <div id="game-canvas-container">
-                <!-- O WebAssembly injetará o jogo aqui na Fase 3 -->
-                <p class="loading-text">Iniciando Core...</p>
+                <!-- O WebAssembly usará este canvas para desenhar os gráficos do jogo -->
+                <canvas id="emulator-canvas"></canvas>
             </div>
             <button id="btn-quit" class="btn-danger">ABORTAR MISSÃO</button>
         </section>
@@ -79,18 +82,36 @@
                         <td>SF2CE</td>
                         <td>999.999</td>
                     </tr>
-                    <tr>
-                        <td>2ND</td>
-                        <td>GUEST</td>
-                        <td>FFIGHT</td>
-                        <td>500.000</td>
-                    </tr>
                 </tbody>
             </table>
         </section>
 
     </main>
 
+    <!-- 1. A nossa Lógica Principal -->
     <script src="app.js"></script>
+    
+    <!-- 2. Carregamento e Inicialização do Motor WebAssembly Moderna (ES Module) -->
+    <script type="module">
+        // Importa o núcleo C++ do emulador
+        import fbneo from './core/fbneo_libretro.js';
+
+        // Configura e arranca o motor na memória
+        fbneo({
+            canvas: document.getElementById('emulator-canvas'),
+            noInitialRun: true,
+            locateFile: function(path) {
+                if (path.endsWith('.wasm')) return 'core/' + path;
+                return path;
+            },
+            print: function(text) { console.log("[FBNeo] " + text); },
+            printErr: function(text) { console.error("[FBNeo] " + text); }
+        }).then(function(instance) {
+            console.log("[SYSTEM] Motor FBNeo inicializado e pronto!");
+            // Quebra a "bolha" e expõe as variáveis de sistema para o nosso app.js usar
+            window.CoreFS = instance.FS;
+            window.CoreModule = instance;
+        });
+    </script>
 </body>
 </html>
