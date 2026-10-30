@@ -9,7 +9,6 @@
 const supabaseUrl = 'https://jjsngwebputgcctdsdac.supabase.co';
 const supabaseAnonKey = 'sb_publishable_UIMz7ucKnLjFTM7XOAJpKA_YrQgLv2E';
 
-// Utilizamos "supabaseClient" para evitar conflito com a biblioteca global
 const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseAnonKey);
 console.log("[SYSTEM] Conexão Supabase Estabelecida:", supabaseClient);
 
@@ -30,15 +29,21 @@ const btnToggleShader = document.getElementById('btn-toggle-shader');
 const canvasContainer = document.getElementById('game-canvas-container');
 const canvas = document.getElementById('emulator-canvas');
 
+// Modal Elements
+const scoreModal = document.getElementById('score-modal');
+const btnSubmitScore = document.getElementById('btn-submit-score');
+const btnSkipScore = document.getElementById('btn-skip-score');
+const finalScoreDisplay = document.getElementById('final-score-display');
+const inputPlayerName = document.getElementById('input-player-name');
+
+let activeRomCode = 'sf2ce';
+
 
 // =========================================
 // 3. LÓGICA DO SHADER CRT EM TEMPO REAL
 // =========================================
 btnToggleShader.addEventListener('click', () => {
-    // Liga ou desliga a classe CSS que cria as scanlines
     canvasContainer.classList.toggle('crt-shader');
-    
-    // Atualiza o visual do botão consoante o estado
     if (canvasContainer.classList.contains('crt-shader')) {
         btnToggleShader.className = "btn-danger";
         btnToggleShader.innerText = "DESLIGAR SHADER";
@@ -76,11 +81,19 @@ fileInput.addEventListener('change', (e) => {
 
 
 // =========================================
-// 5. CONTROLOS DO EMULADOR
+// 5. CONTROLOS DO EMULADOR & FIM DE JOGO
 // =========================================
 btnQuit.addEventListener('click', () => {
-    if(confirm("Deseja realmente abortar a missão? O progresso não salvo será perdido.")) {
-        window.location.reload(); 
+    // Removemos o "confirm" nativo porque o emulador bloqueia esse tipo de popups
+    triggerGameOver(activeRomCode, Math.floor(Math.random() * 150000) + 25000);
+    
+    // Tenta pausar o emulador em pano de fundo para não fazer barulho
+    try {
+        if (window.CoreModule && window.CoreModule.pauseMainLoop) {
+            window.CoreModule.pauseMainLoop();
+        }
+    } catch(e) {
+        console.log("[SYSTEM] Emulador continuou a correr em background.");
     }
 });
 
@@ -88,6 +101,33 @@ btnFullscreen.addEventListener('click', () => {
     if (canvasContainer.requestFullscreen) {
         canvasContainer.requestFullscreen();
     }
+});
+
+function triggerGameOver(romCode, scoreAchieved) {
+    finalScoreDisplay.innerText = `SCORE: ${scoreAchieved.toLocaleString()}`;
+    scoreModal.classList.remove('hidden');
+    
+    // Foca automaticamente a caixa de texto para ser mais rápido escrever o nome
+    setTimeout(() => {
+        inputPlayerName.focus();
+        inputPlayerName.select();
+    }, 100);
+}
+
+btnSubmitScore.addEventListener('click', async () => {
+    const playerName = inputPlayerName.value.trim() || 'ANONYMOUS';
+    const scoreVal = parseInt(finalScoreDisplay.innerText.replace(/\D/g, '')) || 0;
+    
+    btnSubmitScore.innerText = "A ENVIAR...";
+    await submitScore(playerName, activeRomCode, scoreVal, 'cps1');
+    
+    scoreModal.classList.add('hidden');
+    window.location.reload();
+});
+
+btnSkipScore.addEventListener('click', () => {
+    scoreModal.classList.add('hidden');
+    window.location.reload();
 });
 
 
@@ -100,6 +140,7 @@ async function processRomFile(file) {
         return;
     }
 
+    activeRomCode = file.name.toLowerCase().replace('.zip', '');
     dropTitle.innerText = "A CARREGAR...";
     sectionDrop.classList.add('hidden');
     sectionEmulator.classList.remove('hidden');
@@ -107,9 +148,8 @@ async function processRomFile(file) {
     try {
         const arrayBuffer = await file.arrayBuffer();
         const originalZipBuffer = new Uint8Array(arrayBuffer);
-        const romCode = file.name.toLowerCase().replace('.zip', '');
         
-        bootWebAssemblyCore(romCode, originalZipBuffer);
+        bootWebAssemblyCore(activeRomCode, originalZipBuffer);
     } catch (error) {
         console.error(error);
         alert(`Erro ao ler ROM: ${error.message}`);
@@ -145,3 +185,75 @@ video_vsync = "true"
         console.error("[SYSTEM] Falha ao iniciar WebAssembly:", e);
     }
 }
+
+
+// =========================================
+// 8. INTEGRAÇÃO COM O GLOBAL RANKING (SUPABASE)
+// =========================================
+async function fetchGlobalRanking() {
+    try {
+        const { data, error } = await supabaseClient
+            .from('global_ranking')
+            .select('*')
+            .order('score', { ascending: false })
+            .limit(10);
+
+        if (error) throw error;
+
+        const rankingTableBody = document.getElementById('ranking-data');
+        if (!rankingTableBody) return;
+
+        if (data && data.length > 0) {
+            rankingTableBody.innerHTML = '';
+            
+            data.forEach((row, index) => {
+                let rankLabel = `${index + 1}TH`;
+                if (index === 0) rankLabel = '1ST';
+                else if (index === 1) rankLabel = '2ND';
+                else if (index === 2) rankLabel = '3RD';
+
+                const tr = document.createElement('tr');
+                if (index === 0) tr.className = 'top-1';
+
+                tr.innerHTML = `
+                    <td>${rankLabel}</td>
+                    <td>${escapeHtml(row.player_name)}</td>
+                    <td>${escapeHtml(row.game_code.toUpperCase())}</td>
+                    <td>${row.score.toLocaleString()}</td>
+                `;
+                rankingTableBody.appendChild(tr);
+            });
+        }
+    } catch (err) {
+        console.error("[SYSTEM] Erro ao carregar ranking:", err.message);
+    }
+}
+
+async function submitScore(playerName, gameCode, scoreValue, systemName) {
+    try {
+        const { error } = await supabaseClient
+            .from('global_ranking')
+            .insert([
+                { 
+                    player_name: playerName, 
+                    game_code: gameCode, 
+                    score: scoreValue, 
+                    system: systemName 
+                }
+            ]);
+
+        if (error) throw error;
+        console.log("[SYSTEM] Pontuação registada com sucesso na nuvem!");
+        fetchGlobalRanking();
+    } catch (err) {
+        console.error("[SYSTEM] Erro ao submeter pontuação:", err.message);
+    }
+}
+
+function escapeHtml(str) {
+    return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+    fetchGlobalRanking();
+});

@@ -77,9 +77,9 @@
                 <tbody id="ranking-data">
                     <tr class="top-1">
                         <td>1ST</td>
-                        <td>UNKNOWN</td>
-                        <td>SF2CE</td>
-                        <td>999.999</td>
+                        <td>A CARREGAR...</td>
+                        <td>---</td>
+                        <td>0</td>
                     </tr>
                 </tbody>
             </table>
@@ -87,14 +87,28 @@
 
     </main>
 
-    <!-- 1. A biblioteca do Supabase carrega PRIMEIRO -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Modal de Fim de Jogo / Submissão de Recorde -->
+    <div id="score-modal" class="cyber-modal hidden">
+        <div class="modal-content cyber-panel">
+            <h2>GAME OVER // REGISTAR SCORE</h2>
+            <p>Insira as suas iniciais para o Global Ranking:</p>
+            
+            <input type="text" id="input-player-name" maxlength="10" placeholder="AAA" value="PLAYER_1" class="cyber-input">
+            <div id="final-score-display" class="neon-text">SCORE: 0</div>
+            
+            <div class="modal-actions" style="margin-top: 20px; display: flex; justify-content: center; gap: 10px;">
+                <button id="btn-submit-score" class="btn-neon">ENVIAR PARA A NUVEM</button>
+                <button id="btn-skip-score" class="btn-danger">SALTAR</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Supabase atualizado para a versão mais recente -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@latest"></script>
     
-    <!-- 2. Depois carregam os nossos controlos e lógica -->
     <script src="input.js"></script>
     <script src="app.js"></script>
     
-    <!-- 3. Por fim, o motor WebAssembly -->
     <script type="module">
         import fbneo from './core/fbneo_libretro.js';
 
