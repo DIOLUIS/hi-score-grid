@@ -18,9 +18,28 @@
         <div class="logo">
             <h1>HI-SCORE<span class="neon-text">_GRID</span></h1>
         </div>
-        <div class="user-profile">
-            <span class="player-name">PLAYER_1</span>
-            <span class="player-stars">⭐ 000</span>
+        
+        <div class="user-profile" id="user-profile-section">
+            <button id="btn-show-login" class="btn-neon">LOGIN / REGISTAR</button>
+            
+           <div id="logged-in-info" class="hidden" style="display: flex; align-items: center; gap: 15px;">
+    <!-- Avatar do Jogador (Fallback para avatar genérico se não tiver foto) -->
+    <div style="position: relative;">
+        <img id="user-avatar-img" src="https://ui-avatars.com/api/?name=P1&background=111116&color=00f0ff" alt="Avatar" style="width: 40px; height: 40px; border-radius: 5px; border: 1px solid var(--neon-cyan); object-fit: cover;">
+        
+        <!-- Botão oculto para escolher o ficheiro -->
+        <input type="file" id="avatar-upload" accept="image/png, image/jpeg, image/webp" hidden>
+        
+        <!-- Label que funciona como botão de Upload -->
+        <label for="avatar-upload" class="neon-text" style="font-size: 0.5rem; cursor: pointer; position: absolute; bottom: -15px; left: 0; white-space: nowrap;">[ MUDAR AVATAR ]</label>
+    </div>
+    
+    <div style="display: flex; flex-direction: column;">
+        <span class="player-name" id="display-user-name">PLAYER_1</span>
+        <span class="player-stars">⭐ 000</span>
+    </div>
+    <button id="btn-logout" class="btn-danger" style="padding: 5px 10px; font-size: 0.5rem; height: fit-content;">SAIR</button>
+</div>
         </div>
     </header>
 
@@ -29,17 +48,18 @@
         <div class="arcade-header">
             <h2 class="arena-title">INSERT COIN ARENA <span class="badge">ARCADE</span></h2>
             <nav class="system-selector">
-                <button class="system-tab active">CPS-1</button>
-                <button class="system-tab">CPS-2</button>
-                <button class="system-tab">CPS-3</button>
-                <button class="system-tab">MVS (NEOGEO)</button>
+                <!-- Adicionado data-system para identificar a plataforma no backend -->
+                <button class="system-tab active" data-system="cps1">CPS-1</button>
+                <button class="system-tab" data-system="cps2">CPS-2</button>
+                <button class="system-tab" data-system="cps3">CPS-3</button>
+                <button class="system-tab" data-system="mvs">MVS (NEOGEO)</button>
             </nav>
         </div>
 
         <section id="drop-zone-section" class="cyber-panel">
             <div id="rom-drop-zone" class="drop-area">
                 <i class="icon-insert-coin"></i>
-                <h2 id="drop-title">SISTEMA ATIVO: CPS-1/CPS-2</h2>
+                <h2 id="drop-title">SISTEMA ATIVO: CPS-1</h2>
                 <p>Arraste o ficheiro .zip do jogo aqui</p>
                 <p class="sub-text">Validação de Hash Local Ativada</p>
                 <input type="file" id="rom-input" accept=".zip" hidden>
@@ -64,16 +84,17 @@
         </section>
 
         <section id="leaderboard-section" class="cyber-panel">
-            <h2 class="section-title">GLOBAL_RANKING // ARCADE</h2>
+            <h2 class="section-title">GLOBAL_RANKING // <span id="ranking-system-title">CPS-1</span></h2>
             <table class="cyber-table">
                 <thead>
-                    <tr>
-                        <th>RANK</th>
-                        <th>JOGADOR</th>
-                        <th>JOGO</th>
-                        <th>SCORE</th>
-                    </tr>
-                </thead>
+    <tr>
+        <th>RANK</th>
+        <th>JOGADOR</th>
+        <th>JOGO</th>
+        <th>SCORE</th>
+        <th>DATA</th> <!-- Nova coluna adicionada aqui -->
+    </tr>
+</thead>
                 <tbody id="ranking-data">
                     <tr class="top-1">
                         <td>1ST</td>
@@ -87,14 +108,34 @@
 
     </main>
 
-    <!-- Modal de Fim de Jogo / Submissão de Recorde -->
+    <!-- MODAL 1: AUTENTICAÇÃO (LOGIN/REGISTO) -->
+    <div id="auth-modal" class="cyber-modal hidden">
+        <div class="modal-content cyber-panel">
+            <h2>IDENTIFICAÇÃO DE JOGADOR</h2>
+            
+            <input type="text" id="auth-username" placeholder="INICIAIS/NOME (Apenas Registo)" class="cyber-input" maxlength="10">
+            <input type="email" id="auth-email" placeholder="E-MAIL" class="cyber-input">
+            <input type="password" id="auth-password" placeholder="PASSWORD" class="cyber-input">
+            
+            <p id="auth-feedback" class="neon-text" style="font-size: 0.8rem; margin: 10px 0; height: 15px;"></p>
+            
+            <div class="modal-actions" style="margin-top: 15px; display: flex; justify-content: center; gap: 10px;">
+                <button id="btn-login-submit" class="btn-neon">ENTRAR</button>
+                <button id="btn-register-submit" class="btn-neon" style="border-color: #ffd700; color: #ffd700;">REGISTAR</button>
+                <button id="btn-close-auth" class="btn-danger">CANCELAR</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 2: FIM DE JOGO / SUBMISSÃO DE RECORDE -->
     <div id="score-modal" class="cyber-modal hidden">
         <div class="modal-content cyber-panel">
             <h2>GAME OVER // REGISTAR SCORE</h2>
-            <p>Insira as suas iniciais para o Global Ranking:</p>
             
-            <input type="text" id="input-player-name" maxlength="10" placeholder="AAA" value="PLAYER_1" class="cyber-input">
-            <div id="final-score-display" class="neon-text">SCORE: 0</div>
+            <p id="score-modal-msg">Insira as suas iniciais para o Global Ranking:</p>
+            
+            <input type="text" id="input-player-name" maxlength="10" placeholder="AAA" class="cyber-input">
+            <div id="final-score-display" class="neon-text" style="margin-top: 15px; font-size: 1.2rem;">SCORE: 0</div>
             
             <div class="modal-actions" style="margin-top: 20px; display: flex; justify-content: center; gap: 10px;">
                 <button id="btn-submit-score" class="btn-neon">ENVIAR PARA A NUVEM</button>
@@ -103,9 +144,7 @@
         </div>
     </div>
 
-    <!-- Supabase atualizado para a versão mais recente -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@latest"></script>
-    
     <script src="input.js"></script>
     <script src="app.js"></script>
     
