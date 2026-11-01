@@ -1,6 +1,6 @@
 /**
  * HI-SCORE GRID // INSERT COIN ARENA
- * Interface, Áudio, Filtro CRT, Autenticação, Upload de Avatar, Segurança Hash e Supabase
+ * Interface, Áudio, Filtro CRT, Autenticação, Upload de Avatar, Segurança Hash, Supabase e Gamepad
  */
 
 // =========================================
@@ -15,7 +15,7 @@ let currentUser = null;
 let isRankedMode = false; 
 
 // =========================================
-// 2. ELEMENTOS DA INTERFACE (DOM)
+// 2. ELEMENTOS DA INTERFACE (DOM) & ÁUDIO
 // =========================================
 const dropZone = document.getElementById('rom-drop-zone');
 const fileInput = document.getElementById('rom-input');
@@ -59,6 +59,17 @@ const rankingSystemTitle = document.getElementById('ranking-system-title');
 let activeSystemCode = 'cps1';
 let runningSystemCode = 'cps1';
 let activeRomCode = 'sf2'; 
+
+// --- SISTEMA DE EFEITOS SONOROS ---
+const sfxCoin = new Audio('./assets/sounds/coin.mp3');
+const sfxGameOver = new Audio('./assets/sounds/game-over.mp3');
+const sfxWin = new Audio('./assets/sounds/win.mp3');
+const sfxError = new Audio('./assets/sounds/error.mp3'); 
+
+sfxCoin.volume = 0.6; 
+sfxGameOver.volume = 0.5; 
+sfxWin.volume = 0.6;
+sfxError.volume = 0.5;
 
 // =========================================
 // 3. SISTEMA DE AUTENTICAÇÃO E PERFIL
@@ -182,11 +193,13 @@ function triggerGameOver(romCode, scoreAchieved) {
     scoreModal.classList.remove('hidden');
     
     if (isRankedMode && currentUser) {
+        sfxWin.play().catch(() => {}); 
         btnSubmitScore.style.display = 'inline-block';
         scoreModalMsg.innerText = `Recorde oficial pronto para o Global Ranking!`;
         scoreModalMsg.style.color = "var(--neon-cyan)";
         btnSkipScore.innerText = "IGNORAR E SAIR";
     } else {
+        sfxGameOver.play().catch(() => {}); 
         btnSubmitScore.style.display = 'none';
         btnSkipScore.innerText = "SAIR DA MÁQUINA";
 
@@ -242,9 +255,9 @@ async function processRomFile(file) {
         const romHash = await calculateSHA256(arrayBuffer);
         const validHashes = ROM_WHITELIST[activeRomCode];
         
-        // Se a ROM for falsa ou não estiver na Whitelist
         if (!validHashes || !validHashes.includes(romHash)) {
-            isRankedMode = false; // Fica em Modo Treino
+            isRankedMode = false; 
+            sfxError.play().catch(() => {}); 
             
             sectionDrop.style.backgroundColor = "rgba(255, 170, 0, 0.05)";
             dropTitle.innerHTML = `
@@ -264,13 +277,13 @@ async function processRomFile(file) {
             return; 
         }
 
-        // Se a ROM for verdadeira mas o jogador não tiver login feito, é Modo Treino silencioso
         if (!currentUser) {
             isRankedMode = false;
         } else {
-            // Conta feita + ROM Oficial = Pode guardar recordes!
-            isRankedMode = true;
+            isRankedMode = true; 
         }
+        
+        sfxCoin.play().catch(() => {}); 
 
         sectionDrop.classList.add('hidden'); 
         sectionEmulator.classList.remove('hidden');
@@ -365,3 +378,59 @@ async function submitScore(playerName, gameCode, scoreValue, systemName, userId)
 
 function escapeHtml(str) { return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
 window.addEventListener('DOMContentLoaded', () => fetchGlobalRanking());
+
+// =========================================
+// 10. DETEÇÃO DE GAMEPAD (PLUG & PLAY)
+// =========================================
+function initGamepadIndicator() {
+    let gpUI = document.getElementById('gamepad-indicator');
+    if (!gpUI) {
+        gpUI = document.createElement('div');
+        gpUI.id = 'gamepad-indicator';
+        gpUI.innerHTML = '🎮 <span id="gamepad-text">P1: OFF</span>';
+        
+        Object.assign(gpUI.style, {
+            position: 'fixed', 
+            top: '20px',       // Fixado na parte superior
+            left: '50%',       // Centrado horizontalmente
+            transform: 'translateX(-50%)', 
+            color: '#ff2a2a', border: '1px solid #ff2a2a',
+            padding: '5px 12px', borderRadius: '4px',
+            fontFamily: 'monospace', fontSize: '0.8rem',
+            display: 'flex', alignItems: 'center', gap: '8px',
+            transition: 'all 0.3s ease', zIndex: '9999',
+            backgroundColor: 'rgba(0,0,0,0.8)',
+            backdropFilter: 'blur(4px)'
+        });
+        document.body.appendChild(gpUI);
+    }
+}
+initGamepadIndicator();
+
+window.addEventListener("gamepadconnected", (e) => {
+    const gpUI = document.getElementById('gamepad-indicator');
+    const gpText = document.getElementById('gamepad-text');
+    if(gpUI && gpText) {
+        gpUI.style.color = '#00f0ff';
+        gpUI.style.borderColor = '#00f0ff';
+        gpUI.style.boxShadow = '0 0 8px rgba(0, 240, 255, 0.5)';
+        
+        let gamepadName = e.gamepad.id;
+        if(gamepadName.length > 15) gamepadName = gamepadName.substring(0, 15) + '...';
+        
+        gpText.innerText = `P1: ON (${gamepadName})`;
+        console.log(`[SYSTEM] Gamepad detetado: ${e.gamepad.id}`);
+    }
+});
+
+window.addEventListener("gamepaddisconnected", (e) => {
+    const gpUI = document.getElementById('gamepad-indicator');
+    const gpText = document.getElementById('gamepad-text');
+    if(gpUI && gpText) {
+        gpUI.style.color = '#ff2a2a';
+        gpUI.style.borderColor = '#ff2a2a';
+        gpUI.style.boxShadow = 'none';
+        gpText.innerText = 'P1: OFF';
+        console.log(`[SYSTEM] Gamepad desligado: ${e.gamepad.id}`);
+    }
+});
