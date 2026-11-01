@@ -12,6 +12,7 @@ const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseAnonKey
 console.log("[SYSTEM] Conexão Supabase Estabelecida:", supabaseClient);
 
 let currentUser = null; 
+let isRankedMode = false; 
 
 // =========================================
 // 2. ELEMENTOS DA INTERFACE (DOM)
@@ -82,13 +83,11 @@ function updateUserInterface(session) {
         };
         
         inputPlayerName.classList.add('hidden');
-        scoreModalMsg.innerText = `Recorde associado à conta: ${playerName}`;
     } else {
         currentUser = null;
         btnShowLogin.classList.remove('hidden');
         loggedInInfo.classList.add('hidden');
         inputPlayerName.classList.remove('hidden');
-        scoreModalMsg.innerText = "Insira as suas iniciais para o Global Ranking:";
     }
 }
 
@@ -120,27 +119,15 @@ if (avatarUploadInput) {
     avatarUploadInput.addEventListener('change', async (e) => {
         const file = e.target.files[0];
         if (!file || !currentUser) return;
-
-        if (file.size > 2 * 1024 * 1024) {
-            alert("SISTEMA ALERTA: Imagem demasiado pesada. Limite máximo: 2MB.");
-            return;
-        }
-
+        if (file.size > 2 * 1024 * 1024) { alert("SISTEMA ALERTA: Imagem demasiado pesada. Limite máximo: 2MB."); return; }
         userAvatarImg.style.opacity = "0.3"; 
-
         try {
-            const { error } = await supabaseClient.storage
-                .from('avatars')
-                .upload(currentUser.id, file, { upsert: true, cacheControl: '3600' });
+            const { error } = await supabaseClient.storage.from('avatars').upload(currentUser.id, file, { upsert: true, cacheControl: '3600' });
             if (error) throw error;
-
             const { data } = supabaseClient.storage.from('avatars').getPublicUrl(currentUser.id);
             userAvatarImg.src = `${data.publicUrl}?t=${new Date().getTime()}`;
-        } catch (err) {
-            alert("SISTEMA ALERTA: Falha na transmissão de imagem. " + err.message);
-        } finally {
-            userAvatarImg.style.opacity = "1";
-        }
+        } catch (err) { alert("SISTEMA ALERTA: Falha na transmissão de imagem. " + err.message); } 
+        finally { userAvatarImg.style.opacity = "1"; }
     });
 }
 
@@ -178,14 +165,8 @@ btnQuit.addEventListener('click', () => {
     const desejaSair = confirm("SISTEMA ALERTA: Tem a certeza que deseja abortar a missão atual? O seu progresso não guardado será perdido.");
     if (!desejaSair) return; 
 
-    // Esconde e destrói o canvas imediatamente
     sectionEmulator.classList.add('hidden');
-    if (canvas) {
-        canvas.style.display = 'none';
-        canvas.remove();
-    }
-
-    // Corta o áudio nativo
+    if (canvas) { canvas.style.display = 'none'; canvas.remove(); }
     try {
         if (typeof WEBAudio !== 'undefined' && WEBAudio.audioContext) WEBAudio.audioContext.suspend();
         if (window.SDL && window.SDL.audioContext) window.SDL.audioContext.suspend();
@@ -197,30 +178,49 @@ btnQuit.addEventListener('click', () => {
 btnFullscreen.addEventListener('click', () => { if (canvasContainer.requestFullscreen) canvasContainer.requestFullscreen(); });
 
 function triggerGameOver(romCode, scoreAchieved) {
-    finalScoreDisplay.innerText = `SCORE: ${scoreAchieved.toLocaleString()}`; scoreModal.classList.remove('hidden');
-    if (!currentUser) { setTimeout(() => { inputPlayerName.focus(); inputPlayerName.select(); }, 100); }
+    finalScoreDisplay.innerText = `SCORE: ${scoreAchieved.toLocaleString()}`; 
+    scoreModal.classList.remove('hidden');
+    
+    if (isRankedMode && currentUser) {
+        btnSubmitScore.style.display = 'inline-block';
+        scoreModalMsg.innerText = `Recorde oficial pronto para o Global Ranking!`;
+        scoreModalMsg.style.color = "var(--neon-cyan)";
+        btnSkipScore.innerText = "IGNORAR E SAIR";
+    } else {
+        btnSubmitScore.style.display = 'none';
+        btnSkipScore.innerText = "SAIR DA MÁQUINA";
+
+        if (!currentUser) {
+            scoreModalMsg.innerHTML = `
+                <span style="color: #fff; font-size: 1.1rem; font-weight: bold;">JOGÃO! 🕹️</span><br><br>
+                <span style="color: #ffd700; font-size: 0.85rem;">Mandaste muito bem! Cria a tua conta (ou faz login) para eternizares os teus futuros recordes no Global Ranking e mostrares quem manda na Arena.</span>
+            `;
+        } else {
+            scoreModalMsg.style.color = "#ffaa00";
+            scoreModalMsg.innerText = "⚠️ MODO TREINO: A ROM utilizada não é a oficial da Arena. O recorde não será guardado.";
+        }
+    }
 }
 
 btnSubmitScore.addEventListener('click', async () => {
-    let playerNameToSubmit = (currentUser && currentUser.user_metadata && currentUser.user_metadata.username) ? currentUser.user_metadata.username : (inputPlayerName.value.trim() || 'ANONYMOUS');
+    let playerNameToSubmit = currentUser.user_metadata.username;
     const scoreVal = parseInt(finalScoreDisplay.innerText.replace(/\D/g, '')) || 0;
-    
-    let userIdToSubmit = currentUser ? currentUser.id : null;
-
     btnSubmitScore.innerText = "A ENVIAR...";
-    await submitScore(playerNameToSubmit, activeRomCode, scoreVal, runningSystemCode, userIdToSubmit);
-    
+    await submitScore(playerNameToSubmit, activeRomCode, scoreVal, runningSystemCode, currentUser.id);
     scoreModal.classList.add('hidden'); window.location.reload();
 });
+
 btnSkipScore.addEventListener('click', () => { scoreModal.classList.add('hidden'); window.location.reload(); });
 
 // =========================================
-// 8. SEGURANÇA: VALIDAÇÃO HASH SHA-256
+// 8. SEGURANÇA: VALIDAÇÃO HASH SHA-256 E MODO TREINO
 // =========================================
-// Defina aqui as assinaturas digitais permitidas para cada jogo
 const ROM_WHITELIST = {
     'sf2': [
-        '622fa72606ac0b07ac83192256e6edf062f61856a0a3f6009befb7d64a7a06b8' // Administrador: Cole a Hash aqui
+        '622fa72606ac0b07ac83192256e6edf062f61856a0a3f6009befb7d64a7a06b8' 
+    ],
+    'sf2ce': [
+        '622fa72606ac0b07ac83192256e6edf062f61856a0a3f6009befb7d64a7a06b8' 
     ]
 };
 
@@ -235,31 +235,43 @@ async function processRomFile(file) {
     
     runningSystemCode = activeSystemCode; 
     activeRomCode = file.name.toLowerCase().replace('.zip', '');
-    
     dropTitle.innerText = "A ANALISAR INTEGRIDADE CRIPTOGRÁFICA..."; 
     
     try { 
         const arrayBuffer = await file.arrayBuffer(); 
-        
-        // Calcular Assinatura
         const romHash = await calculateSHA256(arrayBuffer);
         const validHashes = ROM_WHITELIST[activeRomCode];
         
-        // Se a ROM não tiver um Hash autorizado (ou se o jogo nem estiver na lista)
+        // Se a ROM for falsa ou não estiver na Whitelist
         if (!validHashes || !validHashes.includes(romHash)) {
-            // Fica vermelho e mostra o código na tela para o Admin copiar
-            sectionDrop.style.backgroundColor = "rgba(255, 0, 60, 0.05)";
+            isRankedMode = false; // Fica em Modo Treino
+            
+            sectionDrop.style.backgroundColor = "rgba(255, 170, 0, 0.05)";
             dropTitle.innerHTML = `
-                <span style="color: var(--neon-pink); font-size: 1.2rem;">⛔ ACESSO BLOQUEADO ⛔</span><br><br>
-                <span style="font-size: 0.7rem; color: #fff;">Esta ROM não está autorizada. O Hash detetado foi:</span><br>
-                <input type="text" value="${romHash}" style="width: 100%; max-width: 600px; background: #000; color: var(--neon-cyan); border: 1px solid var(--neon-cyan); padding: 15px; margin-top: 15px; text-align: center; font-family: monospace; font-size: 0.8rem; cursor: pointer;" readonly onclick="this.select();">
+                <span style="color: #ffaa00; font-size: 1.2rem;">⚠️ ROM NÃO OFICIAL - MODO TREINO ⚠️</span><br><br>
+                <span style="font-size: 0.7rem; color: #fff;">O seu recorde não será gravado no ranking. Hash detetado:</span><br>
+                <input type="text" value="${romHash}" style="width: 100%; max-width: 600px; background: #000; color: #ffaa00; border: 1px solid #ffaa00; padding: 15px; margin-top: 15px; text-align: center; font-family: monospace; font-size: 0.8rem; cursor: pointer;" readonly onclick="this.select();">
                 <br><br>
-                <span style="font-size: 0.6rem; color: #888;">(ADMIN: Clique na caixa acima, faça <strong>Ctrl + C</strong> para copiar e cole na sua Whitelist no app.js)</span>
+                <span style="font-size: 0.6rem; color: #888;">(ADMIN: Copie este hash para a Whitelist se desejar oficializar esta versão)</span><br><br>
+                <button id="btn-force-play" class="btn-neon" style="border-color: #ffaa00; color: #ffaa00;">JOGAR APENAS POR DIVERSÃO</button>
             `;
-            return; // O código pára aqui e não carrega o emulador
+            
+            document.getElementById('btn-force-play').addEventListener('click', () => {
+                sectionDrop.classList.add('hidden'); 
+                sectionEmulator.classList.remove('hidden');
+                bootWebAssemblyCore(activeRomCode, new Uint8Array(arrayBuffer));
+            });
+            return; 
         }
 
-        // Passou na segurança, preparar motor
+        // Se a ROM for verdadeira mas o jogador não tiver login feito, é Modo Treino silencioso
+        if (!currentUser) {
+            isRankedMode = false;
+        } else {
+            // Conta feita + ROM Oficial = Pode guardar recordes!
+            isRankedMode = true;
+        }
+
         sectionDrop.classList.add('hidden'); 
         sectionEmulator.classList.remove('hidden');
         bootWebAssemblyCore(activeRomCode, new Uint8Array(arrayBuffer)); 
@@ -299,12 +311,10 @@ async function fetchGlobalRanking() {
                 const tr = document.createElement('tr');
                 if (index === 0) tr.className = 'top-1';
                 
-                // Configuração da Imagem do Jogo
                 const gameCodeClean = escapeHtml(row.game_code.toLowerCase());
                 const gameName = escapeHtml(row.game_code.toUpperCase());
                 const fallbackGame = `https://ui-avatars.com/api/?name=${gameCodeClean}&background=111116&color=00f0ff&font-size=0.4&bold=true&rounded=true`;
 
-                // Configuração da Imagem do Jogador (Avatar)
                 const playerFallback = `https://ui-avatars.com/api/?name=${escapeHtml(row.player_name)}&background=111116&color=00f0ff&bold=true`;
                 let playerAvatarUrl = playerFallback;
                 if (row.user_id) {
@@ -312,7 +322,6 @@ async function fetchGlobalRanking() {
                     playerAvatarUrl = avatarData.publicUrl;
                 }
 
-                // Formatação da Data
                 const dataFormatada = new Date(row.created_at).toLocaleDateString('pt-BR');
 
                 tr.innerHTML = `
