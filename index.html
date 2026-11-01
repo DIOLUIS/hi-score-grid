@@ -3,168 +3,215 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Insert Coin Arena | Hi-Score Grid</title>
-    
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Share+Tech+Mono&display=swap" rel="stylesheet">
-    
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <link rel="stylesheet" href="style.css">
+    <title>HI-SCORE GRID | Diotec Software</title>
+    <style>
+        /* =========================================
+           ESTILOS ISOLADOS DA CAPA (LANDING PAGE)
+           Não afeta o style.css da arcade!
+           ========================================= */
+        :root {
+            --neon-cyan: #00f0ff;
+            --neon-pink: #ff2a2a;
+            --bg-color: #050508;
+            --grid-color: rgba(0, 240, 255, 0.05);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background-color: var(--bg-color);
+            background-image: 
+                linear-gradient(var(--grid-color) 1px, transparent 1px),
+                linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+            background-size: 30px 30px;
+            color: #fff;
+            font-family: 'Courier New', Courier, monospace;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        header {
+            padding: 30px 50px;
+            text-align: center;
+            border-bottom: 1px solid rgba(0, 240, 255, 0.2);
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+        }
+
+        h1.main-title {
+            font-size: 3.5rem;
+            color: var(--neon-cyan);
+            text-shadow: 0 0 10px var(--neon-cyan), 0 0 20px var(--neon-cyan);
+            letter-spacing: 5px;
+            margin-bottom: 10px;
+        }
+
+        .subtitle { color: #888; font-size: 1.2rem; letter-spacing: 2px; }
+
+        /* --- TICKER ARCADE (RECORDES) --- */
+        .ticker-wrap {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            border-top: 1px solid var(--neon-cyan);
+            border-bottom: 1px solid var(--neon-cyan);
+            overflow: hidden;
+            padding: 8px 0;
+            box-shadow: 0 0 10px rgba(0, 240, 255, 0.2);
+        }
+
+        .ticker {
+            display: inline-block;
+            white-space: nowrap;
+            animation: ticker-scroll 25s linear infinite;
+            color: #ffd700;
+            font-size: 0.9rem;
+            letter-spacing: 2px;
+        }
+
+        @keyframes ticker-scroll {
+            0% { transform: translateX(100vw); }
+            100% { transform: translateX(-100%); }
+        }
+
+        .ticker-item { margin: 0 50px; }
+        .ticker-item span { color: #fff; }
+
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 50px 20px;
+            text-align: center;
+        }
+
+        .intro-box {
+            max-width: 800px;
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid var(--neon-cyan);
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0, 240, 255, 0.1);
+            margin-bottom: 50px;
+        }
+
+        .intro-box h2 { color: #ffd700; margin-bottom: 20px; font-size: 1.8rem; }
+        .intro-box p { font-size: 1.1rem; line-height: 1.6; color: #ccc; margin-bottom: 20px; }
+        .highlight { color: var(--neon-cyan); font-weight: bold; }
+
+        /* --- BOTÕES --- */
+        .doors-container { display: flex; gap: 30px; justify-content: center; flex-wrap: wrap; }
+
+        .door-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            width: 350px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--neon-pink);
+            background: transparent;
+            border: 2px solid var(--neon-pink);
+            border-radius: 5px;
+            text-decoration: none;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .door-btn:hover {
+            background: var(--neon-pink);
+            color: #000;
+            box-shadow: 0 0 20px var(--neon-pink);
+            transform: translateY(-5px);
+        }
+
+        .door-btn.disabled { border-color: #444; color: #444; cursor: not-allowed; }
+        .door-btn.disabled:hover { background: transparent; box-shadow: none; transform: none; }
+
+        .support-btn {
+            display: inline-flex; align-items: center; gap: 10px; margin-top: 40px;
+            padding: 12px 25px; font-size: 1rem; font-weight: bold; color: #fff;
+            background: rgba(255, 42, 42, 0.1); border: 1px solid var(--neon-pink);
+            border-radius: 5px; text-decoration: none; text-transform: uppercase;
+            letter-spacing: 1px; transition: all 0.3s ease;
+        }
+
+        .support-btn:hover { background: var(--neon-pink); color: #000; box-shadow: 0 0 15px var(--neon-pink); }
+
+        /* --- RODAPÉ --- */
+        footer {
+            padding: 30px 20px; background: #020204; border-top: 1px solid #222;
+            text-align: center; font-size: 0.85rem; color: #555; line-height: 1.8;
+        }
+        .watermark { font-size: 1.2rem; font-weight: bold; color: #444; letter-spacing: 4px; margin-bottom: 15px; }
+        .footer-links a { color: #666; text-decoration: none; margin: 0 10px; transition: color 0.2s; }
+        .footer-links a:hover { color: var(--neon-cyan); }
+    </style>
 </head>
 <body>
 
-    <header class="top-nav">
-        <div class="logo">
-            <h1>HI-SCORE<span class="neon-text">_GRID</span></h1>
-        </div>
-        
-        <div class="user-profile" id="user-profile-section">
-            <button id="btn-show-login" class="btn-neon">LOGIN / REGISTAR</button>
-            
-           <div id="logged-in-info" class="hidden" style="display: flex; align-items: center; gap: 15px;">
-    <!-- Avatar do Jogador (Fallback para avatar genérico se não tiver foto) -->
-    <div style="position: relative;">
-        <img id="user-avatar-img" src="https://ui-avatars.com/api/?name=P1&background=111116&color=00f0ff" alt="Avatar" style="width: 40px; height: 40px; border-radius: 5px; border: 1px solid var(--neon-cyan); object-fit: cover;">
-        
-        <!-- Botão oculto para escolher o ficheiro -->
-        <input type="file" id="avatar-upload" accept="image/png, image/jpeg, image/webp" hidden>
-        
-        <!-- Label que funciona como botão de Upload -->
-        <label for="avatar-upload" class="neon-text" style="font-size: 0.5rem; cursor: pointer; position: absolute; bottom: -15px; left: 0; white-space: nowrap;">[ MUDAR AVATAR ]</label>
-    </div>
-    
-    <div style="display: flex; flex-direction: column;">
-        <span class="player-name" id="display-user-name">PLAYER_1</span>
-        <span class="player-stars">⭐ 000</span>
-    </div>
-    <button id="btn-logout" class="btn-danger" style="padding: 5px 10px; font-size: 0.5rem; height: fit-content;">SAIR</button>
-</div>
-        </div>
+    <header>
+        <h1 class="main-title">HI-SCORE_GRID</h1>
+        <p class="subtitle">// COMPETITIVE RETRO ARENA //</p>
     </header>
 
-    <main class="arena-container">
-        
-        <div class="arcade-header">
-            <h2 class="arena-title">INSERT COIN ARENA <span class="badge">ARCADE</span></h2>
-            <nav class="system-selector">
-                <!-- Adicionado data-system para identificar a plataforma no backend -->
-                <button class="system-tab active" data-system="cps1">CPS-1</button>
-                <button class="system-tab" data-system="cps2">CPS-2</button>
-                <button class="system-tab" data-system="cps3">CPS-3</button>
-                <button class="system-tab" data-system="mvs">MVS (NEOGEO)</button>
-            </nav>
+    <div class="ticker-wrap">
+        <div class="ticker">
+            <span class="ticker-item">👑 TOP 1 CPS-1: <span>CYBER_NINJA (250.000)</span></span>
+            <span class="ticker-item">👑 TOP 1 MVS: <span>DIOTEC (195.000)</span></span>
+            <span class="ticker-item">👑 TOP 1 CPS-2: <span>PLAYER_ONE (138.283)</span></span>
+            <span class="ticker-item">⚡ PREPARA A TUA ROM E ENTRA NA ARENA! ⚡</span>
+        </div>
+    </div>
+
+    <main>
+        <div class="intro-box">
+            <h2>O SUBMUNDO DOS RECORDES ARCADE</h2>
+            <p>Bem-vindo à plataforma de competição retro definitiva. Construída com um motor WebAssembly de alto desempenho, a nossa arena permite-lhe competir globalmente nos clássicos dos anos 90, diretamente no seu navegador, sem latência.</p>
+            
+            <p style="border-left: 3px solid var(--neon-pink); padding-left: 15px; text-align: left; margin: 30px 0;">
+                <span style="color: var(--neon-pink); font-weight: bold;">⚠️ REGULAMENTO (B.Y.O.R.):</span><br>
+                Por motivos de segurança e direitos de autor, o HI-SCORE GRID não aloja nem distribui jogos comerciais. Adotamos a política <span class="highlight">Bring Your Own ROM</span>. O jogador deve possuir o ficheiro .zip original do jogo para entrar na arena. O nosso sistema valida a integridade do ficheiro localmente (Hash SHA-256) para garantir tabelas de recordes 100% justas e livres de batotas (anti-cheat).
+            </p>
         </div>
 
-        <section id="drop-zone-section" class="cyber-panel">
-            <div id="rom-drop-zone" class="drop-area">
-                <i class="icon-insert-coin"></i>
-                <h2 id="drop-title">SISTEMA ATIVO: CPS-1</h2>
-                <p>Arraste o ficheiro .zip do jogo aqui</p>
-                <p class="sub-text">Validação de Hash Local Ativada</p>
-                <input type="file" id="rom-input" accept=".zip" hidden>
-                
-                <div style="margin-top: 20px; display: flex; justify-content: center;">
-                    <button id="btn-select-rom" class="btn-neon">SELECIONAR FICHEIRO</button>
-                </div>
-            </div>
-        </section>
-
-        <!-- Secção do Emulador -->
-        <section id="emulator-section" class="cyber-panel hidden" style="display: flex; flex-direction: column; align-items: center;">
-            <div id="game-canvas-container">
-                <canvas id="emulator-canvas"></canvas>
-            </div>
+        <div class="doors-container">
+            <!-- A ligação mágica para a sua arena restaurada -->
+            <a href="arcade.html" class="door-btn">
+                ENTRAR NA ARENA ARCADE<br>
+                <span style="font-size: 0.8rem; color: #fff; font-weight: normal;">(CPS-1, CPS-2, MVS)</span>
+            </a>
             
-            <div class="emulator-controls">
-                <button id="btn-toggle-shader" class="btn-neon">LIGAR SHADER CRT</button>
-                <button id="btn-quit" class="btn-danger">ABORTAR MISSÃO</button>
-                <button id="btn-fullscreen" class="btn-neon">ECRÃ INTEIRO</button>
-            </div>
-        </section>
+            <a href="#" class="door-btn disabled" title="Em desenvolvimento">
+                ARENA DE CONSOLAS<br>
+                <span style="font-size: 0.8rem; font-weight: normal;">(EM BREVE)</span>
+            </a>
+        </div>
 
-        <section id="leaderboard-section" class="cyber-panel">
-            <h2 class="section-title">GLOBAL_RANKING // <span id="ranking-system-title">CPS-1</span></h2>
-            <table class="cyber-table">
-                <thead>
-    <tr>
-        <th>RANK</th>
-        <th>JOGADOR</th>
-        <th>JOGO</th>
-        <th>SCORE</th>
-        <th>DATA</th> <!-- Nova coluna adicionada aqui -->
-    </tr>
-</thead>
-                <tbody id="ranking-data">
-                    <tr class="top-1">
-                        <td>1ST</td>
-                        <td>A CARREGAR...</td>
-                        <td>---</td>
-                        <td>0</td>
-                    </tr>
-                </tbody>
-            </table>
-        </section>
-
+        <a href="https://apoia.se/oseulinkaqui" target="_blank" class="support-btn">
+            🪙 INSERT COIN (APOIAR O DEV)
+        </a>
     </main>
 
-    <!-- MODAL 1: AUTENTICAÇÃO (LOGIN/REGISTO) -->
-    <div id="auth-modal" class="cyber-modal hidden">
-        <div class="modal-content cyber-panel">
-            <h2>IDENTIFICAÇÃO DE JOGADOR</h2>
-            
-            <input type="text" id="auth-username" placeholder="INICIAIS/NOME (Apenas Registo)" class="cyber-input" maxlength="10">
-            <input type="email" id="auth-email" placeholder="E-MAIL" class="cyber-input">
-            <input type="password" id="auth-password" placeholder="PASSWORD" class="cyber-input">
-            
-            <p id="auth-feedback" class="neon-text" style="font-size: 0.8rem; margin: 10px 0; height: 15px;"></p>
-            
-            <div class="modal-actions" style="margin-top: 15px; display: flex; justify-content: center; gap: 10px;">
-                <button id="btn-login-submit" class="btn-neon">ENTRAR</button>
-                <button id="btn-register-submit" class="btn-neon" style="border-color: #ffd700; color: #ffd700;">REGISTAR</button>
-                <button id="btn-close-auth" class="btn-danger">CANCELAR</button>
-            </div>
+    <footer>
+        <div class="watermark">DIOTEC SOFTWARE</div>
+        <p>&copy; 2026 Dionísio Luís (DIOLUIS). Todos os direitos reservados.</p>
+        <p>Desenvolvido para Linux, Web e entusiastas do código livre.</p>
+        <p style="font-size: 0.7rem; margin-top: 10px;">HI-SCORE GRID é uma plataforma de código aberto. Nenhuma ROM, BIOS ou material com direitos de autor é armazenado nestes servidores.</p>
+        
+        <div class="footer-links" style="margin-top: 15px;">
+            <a href="#">Termos de Serviço</a> | 
+            <a href="#">Política de Privacidade</a> | 
+            <a href="https://github.com/DIOLUIS" target="_blank">GitHub</a>
         </div>
-    </div>
+    </footer>
 
-    <!-- MODAL 2: FIM DE JOGO / SUBMISSÃO DE RECORDE -->
-    <div id="score-modal" class="cyber-modal hidden">
-        <div class="modal-content cyber-panel">
-            <h2>GAME OVER // REGISTAR SCORE</h2>
-            
-            <p id="score-modal-msg">Insira as suas iniciais para o Global Ranking:</p>
-            
-            <input type="text" id="input-player-name" maxlength="10" placeholder="AAA" class="cyber-input">
-            <div id="final-score-display" class="neon-text" style="margin-top: 15px; font-size: 1.2rem;">SCORE: 0</div>
-            
-            <div class="modal-actions" style="margin-top: 20px; display: flex; justify-content: center; gap: 10px;">
-                <button id="btn-submit-score" class="btn-neon">ENVIAR PARA A NUVEM</button>
-                <button id="btn-skip-score" class="btn-danger">SALTAR</button>
-            </div>
-        </div>
-    </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@latest"></script>
-    <script src="input.js"></script>
-    <script src="app.js"></script>
-    
-    <script type="module">
-        import fbneo from './core/fbneo_libretro.js';
-
-        fbneo({
-            canvas: document.getElementById('emulator-canvas'),
-            noInitialRun: true,
-            locateFile: function(path) {
-                if (path.endsWith('.wasm')) return 'core/' + path;
-                return path;
-            },
-            print: function(text) { console.log("[FBNeo] " + text); },
-            printErr: function(text) { console.error("[FBNeo] " + text); }
-        }).then(function(instance) {
-            console.log("[SYSTEM] Motor FBNeo inicializado e pronto!");
-            window.CoreFS = instance.FS;
-            window.CoreModule = instance;
-        });
-    </script>
 </body>
 </html>
