@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HI-SCORE GRID | Diotec Software</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         /* =========================================
            ESTILOS ISOLADOS DA CAPA (LANDING PAGE)
@@ -213,5 +214,45 @@
         </div>
     </footer>
 
+    <!-- SCRIPT DA CAPA: LIGAÇÃO AO SUPABASE PARA O TICKER DINÂMICO -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        const supabaseUrl = 'https://jjsngwebputgcctdsdac.supabase.co';
+        const supabaseKey = 'sb_publishable_UIMz7ucKnLjFTM7XOAJpKA_YrQgLv2E';
+        const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+        async function carregarRecordesNoTicker() {
+            // Procura a classe .ticker que já existe no seu HTML
+            const tickerContainer = document.querySelector('.ticker');
+            if (!tickerContainer) return; 
+            
+            try {
+                // Vai buscar os 5 melhores scores à base de dados
+                const { data, error } = await supabaseClient
+                    .from('global_ranking')
+                    .select('player_name, game_code, score, system')
+                    .order('score', { ascending: false })
+                    .limit(5);
+
+                if (error) throw error;
+
+                if (data && data.length > 0) {
+                    let tickerHTML = '';
+                    // Substitui o texto estático pelos dados reais
+                    data.forEach((row, index) => {
+                        tickerHTML += `<span class="ticker-item">👑 TOP ${index + 1} ${row.system.toUpperCase()}: <span>${row.player_name} (${row.score.toLocaleString()}) em ${row.game_code.toUpperCase()}</span></span>`;
+                    });
+                    tickerHTML += `<span class="ticker-item">⚡ PREPARA A TUA ROM E ENTRA NA ARENA! ⚡</span>`;
+                    
+                    tickerContainer.innerHTML = tickerHTML;
+                }
+            } catch (err) {
+                console.error("[SYSTEM] Erro ao carregar ticker da capa:", err.message);
+            }
+        }
+
+        // Executa quando a página acaba de carregar
+        window.addEventListener('DOMContentLoaded', carregarRecordesNoTicker);
+    </script>
 </body>
 </html>
