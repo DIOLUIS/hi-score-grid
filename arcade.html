@@ -30,8 +30,8 @@
         <!-- Botão oculto para escolher o ficheiro -->
         <input type="file" id="avatar-upload" accept="image/png, image/jpeg, image/webp" hidden>
         
-        <!-- Label que funciona como botão de Upload -->
-        <label for="avatar-upload" class="neon-text" style="font-size: 0.5rem; cursor: pointer; position: absolute; bottom: -15px; left: 0; white-space: nowrap;">[ MUDAR AVATAR ]</label>
+        <!-- Botão modificado para abrir o modal em vez do explorador de ficheiros -->
+        <span id="btn-mudar-avatar" class="neon-text" style="font-size: 0.5rem; cursor: pointer; position: absolute; bottom: -15px; left: 0; white-space: nowrap;" onclick="abrirModalComPermissoes()">[ MUDAR AVATAR ]</span>
     </div>
     
     <div style="display: flex; flex-direction: column;">
@@ -92,7 +92,7 @@
         <th>JOGADOR</th>
         <th>JOGO</th>
         <th>SCORE</th>
-        <th>DATA</th> <!-- Nova coluna adicionada aqui -->
+        <th>DATA</th>
     </tr>
 </thead>
                 <tbody id="ranking-data">
@@ -144,6 +144,48 @@
         </div>
     </div>
 
+    <!-- =========================================
+     MODAL DE PERFIL & AVATARES (Movido para ACIMA dos scripts)
+     ========================================= -->
+    <div id="perfil-modal" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #050508; border: 2px solid #00f0ff; padding: 30px; z-index: 10000; box-shadow: 0 0 30px rgba(0, 240, 255, 0.2); width: 400px; text-align: center;">
+        
+        <h2 style="color: #00f0ff; margin-bottom: 20px;">SELECIONAR AVATAR</h2>
+
+        <!-- Opções Gratuitas Geradas na Hora -->
+        <div id="avatar-grid" style="display: flex; justify-content: center; gap: 15px; margin-bottom: 20px;">
+            <img src="https://api.dicebear.com/9.x/pixel-art/svg?seed=Player1" style="width: 64px; height: 64px; border: 1px solid #444; cursor: pointer;" onclick="selecionarAvatar(this.src)">
+            <img src="https://api.dicebear.com/9.x/pixel-art/svg?seed=Player2" style="width: 64px; height: 64px; border: 1px solid #444; cursor: pointer;" onclick="selecionarAvatar(this.src)">
+            <img src="https://api.dicebear.com/9.x/pixel-art/svg?seed=Player3" style="width: 64px; height: 64px; border: 1px solid #444; cursor: pointer;" onclick="selecionarAvatar(this.src)">
+        </div>
+        
+        <button onclick="gerarAvataresAleatorios()" style="background: transparent; color: #fff; border: 1px solid #fff; padding: 5px 15px; cursor: pointer; margin-bottom: 30px;">
+            🎲 GERAR NOVOS
+        </button>
+
+        <hr style="border: 0; border-top: 1px solid #333; margin-bottom: 20px;">
+
+        <!-- Área VIP (Bloqueada) -->
+        <h3 style="color: #ffd700; margin-bottom: 15px;">👑 ÁREA FUNDADOR (VIP)</h3>
+        <div id="vip-upload-section" style="opacity: 0.5; position: relative;">
+            <input type="file" id="vip-avatar-upload" accept="image/png, image/jpeg, image/gif" disabled style="margin-bottom: 10px; width: 100%; color: #888;">
+            
+            <!-- O Cadeado / Aviso -->
+            <div id="vip-lock-message" style="color: #ff2a2a; font-size: 0.85rem; font-weight: bold;">
+                🔒 EXCLUSIVO VIP. <a href="#" style="color: #ffd700;">TORNAR-SE FUNDADOR</a>
+            </div>
+        </div>
+
+        <button onclick="fecharModalPerfil()" style="margin-top: 30px; background: #ff2a2a; color: #fff; border: none; padding: 10px 20px; font-weight: bold; cursor: pointer; width: 100%;">
+            FECHAR
+        </button>
+    </div>
+
+    <!-- Fundo Escuro do Modal -->
+    <div id="perfil-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 9999;"></div>
+
+    <!-- =========================================
+     SCRIPTS (Movidos para o final absoluto)
+     ========================================= -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@latest"></script>
     <script src="input.js"></script>
     <script src="app.js"></script>

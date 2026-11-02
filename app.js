@@ -50,8 +50,14 @@ const btnRegisterSubmit = document.getElementById('btn-register-submit');
 const btnCloseAuth = document.getElementById('btn-close-auth');
 const authFeedback = document.getElementById('auth-feedback');
 
-const avatarUploadInput = document.getElementById('avatar-upload');
 const userAvatarImg = document.getElementById('user-avatar-img');
+
+// Variáveis do Modal de Perfil/VIP
+const modalPerfil = document.getElementById('perfil-modal');
+const overlayPerfil = document.getElementById('perfil-overlay');
+const vipUploadSection = document.getElementById('vip-upload-section');
+const vipAvatarUpload = document.getElementById('vip-avatar-upload');
+const vipLockMessage = document.getElementById('vip-lock-message');
 
 const systemTabs = document.querySelectorAll('.system-tab');
 const rankingSystemTitle = document.getElementById('ranking-system-title');
@@ -124,23 +130,102 @@ btnLoginSubmit.addEventListener('click', async () => {
 btnLogout.addEventListener('click', async () => await supabaseClient.auth.signOut());
 
 // =========================================
-// 4. UPLOAD DE AVATAR (COM LIMITE E UPSERT)
+// 4. SISTEMA DE AVATARES E PERFIL VIP
 // =========================================
-if (avatarUploadInput) {
-    avatarUploadInput.addEventListener('change', async (e) => {
+
+// Função chamada pelo botão "[ MUDAR AVATAR ]" no arcade.html
+// IMPORTANTE: Declare a função como global chamando window.abrirModalComPermissoes 
+// ou associando o evento diretamente aqui (recomendado).
+async function abrirModalComPermissoes() {
+    if (!currentUser) {
+        alert("SISTEMA ALERTA: Inicie sessão primeiro para mudar o avatar.");
+        return;
+    }
+
+    try {
+        // Consulta o status VIP
+        const { data: profile, error: dbError } = await supabaseClient
+            .from('profiles')
+            .select('is_vip')
+            .eq('id', currentUser.id)
+            .single();
+
+        if (dbError && dbError.code !== 'PGRST116') {
+            console.error("Erro ao verificar status VIP:", dbError.message);
+        }
+
+        // Validação visual VIP vs Gratuito
+        if (profile && profile.is_vip) {
+            vipUploadSection.style.opacity = "1";
+            vipAvatarUpload.disabled = false; 
+            vipAvatarUpload.style.color = "#00f0ff";
+            vipLockMessage.style.display = "none"; 
+        } else {
+            vipUploadSection.style.opacity = "0.5";
+            vipAvatarUpload.disabled = true; 
+            vipAvatarUpload.style.color = "#888";
+            vipLockMessage.style.display = "block"; 
+        }
+
+        modalPerfil.style.display = 'block';
+        overlayPerfil.style.display = 'block';
+        gerarAvataresAleatorios();
+
+    } catch (error) {
+        console.error("[SYSTEM] Erro no carregamento de permissões:", error);
+    }
+}
+
+// Expõe a função para o global scope para que o onclick do HTML funcione
+window.abrirModalComPermissoes = abrirModalComPermissoes;
+
+function fecharModalPerfil() {
+    if (modalPerfil) modalPerfil.style.display = 'none';
+    if (overlayPerfil) overlayPerfil.style.display = 'none';
+}
+window.fecharModalPerfil = fecharModalPerfil;
+
+function gerarAvataresAleatorios() {
+    const avatares = document.querySelectorAll('#avatar-grid img');
+    avatares.forEach(img => {
+        const textoAleatorio = Math.random().toString(36).substring(2, 10);
+        img.src = `https://api.dicebear.com/9.x/pixel-art/svg?seed=${textoAleatorio}`;
+    });
+}
+window.gerarAvataresAleatorios = gerarAvataresAleatorios;
+
+function selecionarAvatar(urlImagem) {
+    if (!currentUser) return;
+    userAvatarImg.src = urlImagem;
+    alert("Avatar atualizado para a sessão atual! (Persistência na BD em breve)");
+    fecharModalPerfil();
+}
+window.selecionarAvatar = selecionarAvatar;
+
+// Upload de Avatar VIP
+if (vipAvatarUpload) {
+    vipAvatarUpload.addEventListener('change', async (e) => {
         const file = e.target.files[0];
         if (!file || !currentUser) return;
         if (file.size > 2 * 1024 * 1024) { alert("SISTEMA ALERTA: Imagem demasiado pesada. Limite máximo: 2MB."); return; }
+        
         userAvatarImg.style.opacity = "0.3"; 
         try {
             const { error } = await supabaseClient.storage.from('avatars').upload(currentUser.id, file, { upsert: true, cacheControl: '3600' });
             if (error) throw error;
+            
             const { data } = supabaseClient.storage.from('avatars').getPublicUrl(currentUser.id);
             userAvatarImg.src = `${data.publicUrl}?t=${new Date().getTime()}`;
-        } catch (err) { alert("SISTEMA ALERTA: Falha na transmissão de imagem. " + err.message); } 
-        finally { userAvatarImg.style.opacity = "1"; }
+            fecharModalPerfil(); 
+            alert("Avatar VIP transferido com sucesso!");
+        } catch (err) { 
+            alert("SISTEMA ALERTA: Falha na transmissão de imagem. " + err.message); 
+        } finally { 
+            userAvatarImg.style.opacity = "1"; 
+        }
     });
 }
+
 
 // =========================================
 // 5. GESTÃO DE SISTEMAS (TABS & FILTROS)
