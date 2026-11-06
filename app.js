@@ -380,13 +380,30 @@ async function processRomFile(file) {
     }
 }
 
-function bootWebAssemblyCore(romCode, romZipBuffer) {
+ function bootWebAssemblyCore(romCode, romZipBuffer) {
     if (!window.CoreFS || !window.CoreModule) { alert("A carregar motor..."); return; }
     try {
         if (!window.CoreFS.analyzePath('/roms').exists) window.CoreFS.mkdir('/roms');
         window.CoreFS.writeFile(`/roms/${romCode}.zip`, romZipBuffer);
-        window.CoreFS.writeFile('/retroarch.cfg', `audio_latency = "128"\naudio_rate_control = "true"\nvideo_vsync = "true"`);
-        window.CoreModule.callMain(['-c', '/retroarch.cfg', `/roms/${romCode}.zip`]); canvas.style.display = "block";
+        
+        // NOVO: Escudo Anti-Cheat (Desativa Menus, Save States, Rewind e Cheats)
+        const antiCheatCfg = `
+audio_latency = "128"
+audio_rate_control = "true"
+video_vsync = "true"
+input_menu_toggle = "nul"
+input_save_state = "nul"
+input_load_state = "nul"
+input_rewind = "nul"
+input_reset = "nul"
+input_cheat_index_plus = "nul"
+input_cheat_index_minus = "nul"
+input_cheat_toggle = "nul"
+        `;
+        
+        window.CoreFS.writeFile('/retroarch.cfg', antiCheatCfg);
+        window.CoreModule.callMain(['-c', '/retroarch.cfg', `/roms/${romCode}.zip`]); 
+        canvas.style.display = "block";
     } catch (e) { console.error("[SYSTEM] Erro Wasm:", e); }
 }
 

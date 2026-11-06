@@ -79,9 +79,15 @@ window.addEventListener("gamepaddisconnected", (e) => {
     console.log(`[INPUT] Comando desconectado: ${e.gamepad.id}`);
 });
 
-// Impede que as setas do teclado façam scroll na página enquanto joga
+// Impede scroll da página E bloqueia as teclas de serviço/diagnóstico do emulador (F1 a F4)
 window.addEventListener("keydown", function(e) {
-    if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight","Space"].indexOf(e.code) > -1) {
+    const teclasProibidas = [
+        "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Space",
+        "F1", "F2", "F3", "F4", "F11", "F12"
+    ];
+    
+    if(teclasProibidas.indexOf(e.code) > -1) {
         e.preventDefault();
+        e.stopPropagation(); // Impede que o emulador sequer "ouça" o clique desta tecla
     }
 }, false);
